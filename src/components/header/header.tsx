@@ -1,34 +1,44 @@
 import React, { useState } from 'react';
 import styles from './header.module.scss';
 import { Button } from '@mui/material';
-import {useLoading} from "../../redux/hooks/useLoading.ts";
+import { useLoading } from "../../redux/hooks/useLoading.ts";
+import { useDispatch } from 'react-redux';
+import { fetchRepositories } from '../../redux/slices/repositoriesSlice.ts';
+import { AppDispatch } from '../../redux/store/store.ts';
 
-
-const Header: React.FC<{onFilterChange: (filter: string) => void }> = ({ onFilterChange }) => {
+const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilterChange }) => {
 	const [filter, setFilter] = useState('');
+	const { setLoadingState } = useLoading();
+	const dispatch = useDispatch<AppDispatch>();
 
 	const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setFilter(event.target.value);
 	};
 
-	const handleSearchClick = () => {
+	const executeSearch = async (filter: string) => {
 		setLoadingState(true);
-		onFilterChange(filter);
-		setTimeout(()=> {
+		try {
+			// Используем unwrap для получения результата и обработки возможных ошибок
+			await dispatch(fetchRepositories(filter)).unwrap();
+			onFilterChange(filter);
+		} catch (error) {
+			// Приведение ошибки к строке или другому типу
+			const errorMessage = (error as Error).message || 'Ошибка при выполнении запроса';
+			console.error("Ошибка при выполнении поиска:", errorMessage);
+		} finally {
 			setLoadingState(false);
-		},2000)
-	};
-	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
-		if(event.key ==='Enter') {
-			setLoadingState(true);
-			handleSearchClick();
-			setTimeout(()=> {
-				setLoadingState(false);
-			},2000)
 		}
-	}
+	};
 
-	const {setLoadingState} = useLoading()
+	const handleSearchClick = () => {
+		executeSearch(filter);
+	};
+
+	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+		if (event.key === 'Enter') {
+			executeSearch(filter);
+		}
+	};
 
 	return (
 		<div className={styles.container}>
@@ -40,26 +50,14 @@ const Header: React.FC<{onFilterChange: (filter: string) => void }> = ({ onFilte
 				className={styles.searchInput}
 				onKeyDown={isEnter}
 			/>
-
 			<Button
 				variant="contained"
 				size="medium"
 				onClick={handleSearchClick}
 				className={styles.searchButton}
-				sx={{
-					height: '60%',
-					outline: 'none',
-					'&:focus': {
-						outline: 'none',
-					},
-					'&:active': {
-						outline: 'none',
-					}
-				}}
 			>
 				Искать
 			</Button>
-
 		</div>
 	);
 };

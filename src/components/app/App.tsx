@@ -1,6 +1,6 @@
 import Header from '../header/header.tsx';
 import style from './app.module.scss';
-import {useState} from "react";
+import { useState } from "react";
 import SearchResult from "../search-result/search-result.tsx";
 
 const App = () => {
@@ -12,14 +12,15 @@ const App = () => {
 
 	return (
 		<>
-			<Header onFilterChange={handleFilterChange}/>
+			<Header onFilterChange={handleFilterChange} />
 			<div className={style.container}>
-				{filter === '' ?
+				{filter === '' ? (
 					<div className={style.hello}>
 						Добро пожаловать
 					</div>
-					:
-					<SearchResult/>}
+				) : (
+					<SearchResult filter={filter} />
+				)}
 			</div>
 		</>
 	);

@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import loadingSlice from "../slices/loadingSlice.ts";
+import loadingSlice from '../slices/loadingSlice';
+import repositoriesSlice from '../slices/repositoriesSlice';
 
 const store = configureStore({
     reducer: {
         loading: loadingSlice,
+        repositories: repositoriesSlice,
     },
 });
 
