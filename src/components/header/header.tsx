@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styles from './header.module.scss';
 import { Button } from '@mui/material';
+import {useLoading} from "../../redux/hooks/useLoading.ts";
+
 
 const Header: React.FC<{onFilterChange: (filter: string) => void }> = ({ onFilterChange }) => {
 	const [filter, setFilter] = useState('');
@@ -10,13 +12,23 @@ const Header: React.FC<{onFilterChange: (filter: string) => void }> = ({ onFilte
 	};
 
 	const handleSearchClick = () => {
+		setLoadingState(true);
 		onFilterChange(filter);
+		setTimeout(()=> {
+			setLoadingState(false);
+		},2000)
 	};
 	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if(event.key ==='Enter') {
+			setLoadingState(true);
 			handleSearchClick();
+			setTimeout(()=> {
+				setLoadingState(false);
+			},2000)
 		}
 	}
+
+	const {setLoadingState} = useLoading()
 
 	return (
 		<div className={styles.container}>
