@@ -47,6 +47,7 @@ const Header: React.FC<{onFilterChange: (filter: string) => void }> = ({ onFilte
 				onClick={handleSearchClick}
 				className={styles.searchButton}
 				sx={{
+					height: '60%',
 					outline: 'none',
 					'&:focus': {
 						outline: 'none',

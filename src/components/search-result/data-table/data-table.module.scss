@@ -1,0 +1,33 @@
+.tableContainer {
+  width: 100%;
+  box-shadow: none !important;
+text-align:left;
+}
+
+.table {
+  min-width: 650px;
+  border-collapse: collapse;
+  .tableCell {
+    text-align: left;
+    font-size: 18px;
+  }
+}
+
+.tableHead {
+  border:0;
+  border-bottom: 1px solid #ddd;
+}
+
+.tableCell {
+  border: none;
+  padding: 16px;
+}
+
+
+.tableRow {
+  border-bottom: 1px solid #ddd;
+}
+
+.tableCell:last-child {
+  border-right: none;
+}

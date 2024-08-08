@@ -1,4 +1,3 @@
-import Container from '@mui/material/Container';
 import Header from '../header/header.tsx';
 import style from './app.module.scss';
 import {useState} from "react";
@@ -14,9 +13,14 @@ const App = () => {
 	return (
 		<>
 			<Header onFilterChange={handleFilterChange}/>
-			<Container className={style.container}>
-				{filter === '' ? 'Добро пожаловать' : <SearchResult/>}
-			</Container>
+			<div className={style.container}>
+				{filter === '' ?
+					<div className={style.hello}>
+						Добро пожаловать
+					</div>
+					:
+					<SearchResult/>}
+			</div>
 		</>
 	);
 };
