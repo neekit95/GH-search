@@ -14,7 +14,7 @@ const App = () => {
 		<>
 			<Header onFilterChange={handleFilterChange} />
 			<Container className={style.container}>
-
+				{filter}
 			</Container>
 		</>
 	);

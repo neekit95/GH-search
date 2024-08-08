@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styles from './header.module.scss';
 import { Button } from '@mui/material';
 
-const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilterChange }) => {
+const Header: React.FC<{onFilterChange: (filter: string) => void }> = ({ onFilterChange }) => {
 	const [filter, setFilter] = useState('');
 
 	const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -12,19 +12,23 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	const handleSearchClick = () => {
 		onFilterChange(filter);
 	};
+	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+		if(event.key ==='Enter') {
+			handleSearchClick();
+		}
+	}
 
 	return (
 		<div className={styles.container}>
 			<input
-
 				type="text"
 				placeholder="Введите поисковой запрос"
 				value={filter}
 				onChange={handleFilterChange}
 				className={styles.searchInput}
+				onKeyDown={isEnter}
+			/>
 
-			>
-			</input>
 			<Button
 				variant="contained"
 				size="medium"
@@ -42,6 +46,7 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 			>
 				Искать
 			</Button>
+
 		</div>
 	);
 };
