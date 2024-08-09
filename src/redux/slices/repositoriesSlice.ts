@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-export interface Repository {
+interface Repository {
 	id: string;
 	name: string;
 	language: string;
@@ -12,57 +12,52 @@ export interface Repository {
 	license: string | null;
 }
 
-export interface RepositoriesState {
+interface RepositoriesState {
 	data: Repository[];
 	status: 'idle' | 'loading' | 'succeeded' | 'failed';
-	error: string | null;
 }
 
 const initialState: RepositoriesState = {
 	data: [],
 	status: 'idle',
-	error: null,
 };
-
-interface FetchRepositoriesParams {
-	query: string;
-	perPage: number;
-	page: number;
-}
 
 export const fetchRepositories = createAsyncThunk(
 	'repositories/fetchRepositories',
-	async ({ query, perPage, page }: FetchRepositoriesParams) => {
-		const response = await axios.get(`https://api.github.com/search/repositories?q=${query}&per_page=${perPage}&page=${page}`);
-		return {
-			items: response.data.items.map((repo: any) => ({
-				...repo,
-				description: repo.description || '',
-				license: repo.license?.name || null
-			})),
-			total_count: response.data.total_count
-		};
+	async ({ query, perPage, page }: { query: string; perPage: number; page: number }) => {
+		const response = await axios.get(`https://api.github.com/search/repositories`, {
+			params: {
+				q: query,
+				per_page: perPage,
+				page,
+			},
+		});
+		return response.data.items;
 	}
 );
 
 const repositoriesSlice = createSlice({
 	name: 'repositories',
 	initialState,
-	reducers: {},
+	reducers: {
+		clearRepositories(state) {
+			state.data = []; // Очистка данных репозиториев
+		},
+	},
 	extraReducers: (builder) => {
 		builder
 			.addCase(fetchRepositories.pending, (state) => {
 				state.status = 'loading';
 			})
-			.addCase(fetchRepositories.fulfilled, (state, action: PayloadAction<{ items: Repository[], total_count: number }>) => {
+			.addCase(fetchRepositories.fulfilled, (state, action: PayloadAction<Repository[]>) => {
 				state.status = 'succeeded';
-				state.data = [...state.data, ...action.payload.items];
+				state.data = [...state.data, ...action.payload]; // Добавляем новые репозитории
 			})
-			.addCase(fetchRepositories.rejected, (state, action) => {
+			.addCase(fetchRepositories.rejected, (state) => {
 				state.status = 'failed';
-				state.error = action.error.message || 'Unknown error';
 			});
 	},
 });
 
+export const { clearRepositories } = repositoriesSlice.actions;
 export default repositoriesSlice.reducer;

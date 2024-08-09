@@ -7,6 +7,10 @@ const store = configureStore({
         loading: loadingSlice,
         repositories: repositoriesSlice,
     },
+    // middleware: (getDefaultMiddleware) =>
+    //     getDefaultMiddleware({
+    //         serializableCheck: false,
+    //     }),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

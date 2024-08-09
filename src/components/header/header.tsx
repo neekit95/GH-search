@@ -3,7 +3,7 @@ import styles from './header.module.scss';
 import { Button } from '@mui/material';
 import { useLoading } from "../../redux/hooks/useLoading.ts";
 import { useDispatch } from 'react-redux';
-import { fetchRepositories } from '../../redux/slices/repositoriesSlice.ts';
+import { fetchRepositories, clearRepositories } from '../../redux/slices/repositoriesSlice.ts';
 import { AppDispatch } from '../../redux/store/store.ts';
 
 const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilterChange }) => {
@@ -18,8 +18,8 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	const executeSearch = async (filter: string) => {
 		setLoadingState(true);
 		try {
-			// Передаем объект с параметрами, включая query, perPage и page
-			await dispatch(fetchRepositories({ query: filter })).unwrap();
+			dispatch(clearRepositories()); // Очищаем репозитории перед новым запросом
+			await dispatch(fetchRepositories({ query: filter, perPage: 100, page: 1 })).unwrap();
 			onFilterChange(filter);
 		} catch (error) {
 			const errorMessage = (error as Error).message || 'Ошибка при выполнении запроса';
@@ -30,11 +30,13 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	};
 
 	const handleSearchClick = () => {
-		executeSearch(filter);
+		if (filter.trim()) { // Проверяем, что фильтр не пустой
+			executeSearch(filter);
+		}
 	};
 
 	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
-		if (event.key === 'Enter') {
+		if (event.key === 'Enter' && filter.trim()) { // Проверяем, что фильтр не пустой
 			executeSearch(filter);
 		}
 	};
