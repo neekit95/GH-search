@@ -42,7 +42,7 @@ interface SearchResultProps {
 
 const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const dispatch = useDispatch<AppDispatch>();
-	const { data: repositories, status, error } = useSelector((state: RootState) => state.repositories);
+	const { data: repositories, status } = useSelector((state: RootState) => state.repositories);
 	const [paginationCount, setPaginationCount] = useState<number>(10);
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [displayedRows, setDisplayedRows] = useState<RowData[]>([]);
@@ -66,7 +66,8 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 				dispatch(fetchRepositories({ query: filter, perPage: 100, page: nextPage }))
 					.then((response) => {
 						if (response.meta.requestStatus === 'fulfilled') {
-							if (response.payload.items.length === 0) {
+							const payload = response.payload as { items: Repository[] };
+							if (payload.items.length === 0) {
 								setHasMore(false);
 							}
 						}
