@@ -27,7 +27,7 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 					<TableCell>Число форков</TableCell>
 					<TableCell>Число звезд</TableCell>
 					<TableCell>Дата Обновления</TableCell>
-					<TableCell>Описание</TableCell>
+					{/*<TableCell>Описание</TableCell>*/}
 				</TableRow>
 			</TableHead>
 			<TableBody>
@@ -42,7 +42,7 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 						<TableCell>{row.forks_count}</TableCell>
 						<TableCell>{row.stargazers_count}</TableCell>
 						<TableCell>{row.updated_at}</TableCell>
-						<TableCell>{row.description}</TableCell>
+						{/*<TableCell>{row.description}</TableCell>*/}
 					</TableRow>
 				))}
 			</TableBody>
