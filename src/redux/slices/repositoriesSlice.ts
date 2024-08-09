@@ -2,13 +2,14 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 export interface Repository {
-	id: number; // Добавляем поле id
+	id: string;
 	name: string;
 	language: string;
 	forks_count: number;
 	stargazers_count: number;
 	updated_at: string;
 	description: string;
+	license: string | null;
 }
 
 export interface RepositoriesState {
@@ -35,13 +36,9 @@ export const fetchRepositories = createAsyncThunk(
 		const response = await axios.get(`https://api.github.com/search/repositories?q=${query}&per_page=${perPage}&page=${page}`);
 		return {
 			items: response.data.items.map((repo: any) => ({
-				id: repo.id, // Убедитесь, что id присутствует
-				name: repo.name,
-				language: repo.language,
-				forks_count: repo.forks_count,
-				stargazers_count: repo.stargazers_count,
-				updated_at: repo.updated_at,
-				description: repo.description || ''
+				...repo,
+				description: repo.description || '',
+				license: repo.license?.name || null
 			})),
 			total_count: response.data.total_count
 		};

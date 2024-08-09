@@ -1,35 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import style from './search-result.module.scss';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchRepositories } from '../../redux/slices/repositoriesSlice';
-import { RootState, AppDispatch } from "../../redux/store/store";
+import { AppDispatch, RootState } from "../../redux/store/store";
 import Loading from "../loading/loading";
 import DataTable from "./data-table/data-table";
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
 interface Repository {
-	id: number; // Добавлено поле id
+	id: string;
 	name: string;
 	language: string;
 	forks_count: number;
 	stargazers_count: number;
 	updated_at: string;
 	description: string;
+	license: string | null;
 }
 
 interface RowData {
-	id: number; // Добавлено поле id
+	id: string;
 	name: string;
 	language: string;
 	forks_count: number;
 	stargazers_count: number;
 	updated_at: string;
 	description: string;
+	license: string | null;
 	isChosen: boolean;
 }
 
-const convertToRowData = (repositories: Repository[], chosenRepoId: number): RowData[] => {
+const convertToRowData = (repositories: Repository[], chosenRepoId: string): RowData[] => {
 	return repositories.map(repo => ({
 		id: repo.id,
 		name: repo.name,
@@ -38,6 +40,7 @@ const convertToRowData = (repositories: Repository[], chosenRepoId: number): Row
 		stargazers_count: repo.stargazers_count,
 		updated_at: repo.updated_at,
 		description: repo.description,
+		license: repo.license,
 		isChosen: repo.id === chosenRepoId,
 	}));
 };
@@ -55,7 +58,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [displayedRows, setDisplayedRows] = useState<RowData[]>([]);
 	const [hasMore, setHasMore] = useState<boolean>(true);
-	const [chosenRepoId, setChosenRepoId] = useState<number | null>(null); // Используйте id
+	const [chosenRepoId, setChosenRepoId] = useState<string>('');
 
 	useEffect(() => {
 		if (filter) {
@@ -68,7 +71,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 			const startIndex = (currentPage - 1) * paginationCount;
 			const endIndex = startIndex + paginationCount;
 			const slicedRepositories = repositories.slice(startIndex, endIndex);
-			setDisplayedRows(convertToRowData(slicedRepositories, chosenRepoId ?? -1)); // Обработка id
+			setDisplayedRows(convertToRowData(slicedRepositories, chosenRepoId));
 
 			if (endIndex >= repositories.length && hasMore) {
 				const nextPage = Math.ceil(repositories.length / 100) + 1;
@@ -102,20 +105,26 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 		});
 	};
 
-	const handleRowClick = (repoId: number) => {
-		setChosenRepoId(prevChosenRepoId => prevChosenRepoId === repoId ? null : repoId);
+	const handleRowClick = (repoId: string) => {
+		setChosenRepoId(prevChosenRepoId => prevChosenRepoId === repoId ? '' : repoId);
 	};
 
 	const chosenRepoDetails = repositories.find(repo => repo.id === chosenRepoId);
 
 	return (
 		<div className={style.container}>
-			{status === 'loading' ? <Loading /> : status === 'failed' ? <div>No gh-token, please refresh page</div> : (
+			{status === 'loading' ? (
+				<Loading />
+			) : (
 				<div className={style.main}>
 					<div className={style.left}>
 						<h1>Результаты поиска</h1>
 						<div className={style.table}>
-							{repositories.length === 0 ? 'Ничего не найдено, повторите поиск' : (
+							{status === 'failed' ? (
+								<div className={style.error}>Ошибка загрузки данных. Пожалуйста, попробуйте позже.</div>
+							) : repositories.length === 0 ? (
+								'Ничего не найдено, повторите поиск'
+							) : (
 								<DataTable
 									rows={displayedRows}
 									onRowClick={handleRowClick}
@@ -162,11 +171,8 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 							{chosenRepoDetails ? (
 								<div className={style.repoDetails}>
 									<h2>{chosenRepoDetails.name}</h2>
-									<p><strong>Language:</strong> {chosenRepoDetails.language}</p>
-									<p><strong>Forks:</strong> {chosenRepoDetails.forks_count}</p>
-									<p><strong>Stars:</strong> {chosenRepoDetails.stargazers_count}</p>
-									<p><strong>Updated At:</strong> {chosenRepoDetails.updated_at}</p>
 									<p><strong>Description:</strong> {chosenRepoDetails.description}</p>
+									<p><strong>License:</strong> {chosenRepoDetails.license}</p>
 								</div>
 							) : (
 								<p>Выберите репозиторий для просмотра деталей</p>

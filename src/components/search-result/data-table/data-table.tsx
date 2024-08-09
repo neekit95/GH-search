@@ -3,19 +3,20 @@ import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material'
 import style from './data-table.module.scss';
 
 interface RowData {
-	id: number; // Идентификатор репозитория
+	id: string; // добавлен id
 	name: string;
 	language: string;
 	forks_count: number;
 	stargazers_count: number;
 	updated_at: string;
 	description: string;
+	license: string | null; // добавлен license
 	isChosen: boolean;
 }
 
 interface DataTableProps {
 	rows: RowData[];
-	onRowClick: (repoId: number) => void; // Передаем идентификатор репозитория
+	onRowClick: (repoId: string) => void;
 }
 
 const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
@@ -28,22 +29,20 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 					<TableCell>Число форков</TableCell>
 					<TableCell>Число звезд</TableCell>
 					<TableCell>Дата Обновления</TableCell>
-					{/* <TableCell>Описание</TableCell> */}
 				</TableRow>
 			</TableHead>
 			<TableBody>
 				{rows.map((row) => (
 					<TableRow
-						key={row.id} // Используем id в качестве ключа
+						key={row.id} // используем id в качестве ключа
 						className={row.isChosen ? style.chosen : ''}
-						onClick={() => onRowClick(row.id)} // Передаем id при клике
+						onClick={() => onRowClick(row.id)}
 					>
 						<TableCell>{row.name}</TableCell>
 						<TableCell>{row.language}</TableCell>
 						<TableCell>{row.forks_count}</TableCell>
 						<TableCell>{row.stargazers_count}</TableCell>
 						<TableCell>{row.updated_at}</TableCell>
-						{/* <TableCell>{row.description}</TableCell> */}
 					</TableRow>
 				))}
 			</TableBody>
