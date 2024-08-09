@@ -21,11 +21,17 @@ const initialState: RepositoriesState = {
 	error: null,
 };
 
+interface FetchRepositoriesParams {
+	query: string;
+	perPage: number;
+	page: number;
+}
+
 export const fetchRepositories = createAsyncThunk(
 	'repositories/fetchRepositories',
-	async (query: string) => {
-		const response = await axios.get(`https://api.github.com/search/repositories?q=${query}`);
-		return response.data.items;
+	async ({ query, perPage, page }: FetchRepositoriesParams) => {
+		const response = await axios.get(`https://api.github.com/search/repositories?q=${query}&per_page=${perPage}&page=${page}`);
+		return { items: response.data.items, total_count: response.data.total_count };  // Возвращаем и элементы, и общее количество
 	}
 );
 
@@ -38,9 +44,9 @@ const repositoriesSlice = createSlice({
 			.addCase(fetchRepositories.pending, (state) => {
 				state.status = 'loading';
 			})
-			.addCase(fetchRepositories.fulfilled, (state, action: PayloadAction<Repository[]>) => {
+			.addCase(fetchRepositories.fulfilled, (state, action: PayloadAction<{ items: Repository[], total_count: number }>) => {
 				state.status = 'succeeded';
-				state.data = action.payload;
+				state.data = [...state.data, ...action.payload.items];
 			})
 			.addCase(fetchRepositories.rejected, (state, action) => {
 				state.status = 'failed';

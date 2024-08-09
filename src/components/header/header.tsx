@@ -18,11 +18,10 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	const executeSearch = async (filter: string) => {
 		setLoadingState(true);
 		try {
-			// Используем unwrap для получения результата и обработки возможных ошибок
-			await dispatch(fetchRepositories(filter)).unwrap();
+			// Передаем объект с параметрами, включая query, perPage и page
+			await dispatch(fetchRepositories({ query: filter })).unwrap();
 			onFilterChange(filter);
 		} catch (error) {
-			// Приведение ошибки к строке или другому типу
 			const errorMessage = (error as Error).message || 'Ошибка при выполнении запроса';
 			console.error("Ошибка при выполнении поиска:", errorMessage);
 		} finally {

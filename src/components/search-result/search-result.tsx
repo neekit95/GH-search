@@ -34,7 +34,7 @@ const convertToRowData = (repositories: Repository[]): RowData[] => {
 	}));
 };
 
-const itemsPerPageOptions = [10, 20, 30, 40, 50];
+const itemsPerPageOptions = [10, 20, 30];
 
 interface SearchResultProps {
 	filter: string;
@@ -42,23 +42,38 @@ interface SearchResultProps {
 
 const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const dispatch = useDispatch<AppDispatch>();
-	const { data: repositories, status } = useSelector((state: RootState) => state.repositories);
+	const { data: repositories, status, error } = useSelector((state: RootState) => state.repositories);
 	const [paginationCount, setPaginationCount] = useState<number>(10);
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [displayedRows, setDisplayedRows] = useState<RowData[]>([]);
+	const [hasMore, setHasMore] = useState<boolean>(true);
 
 	useEffect(() => {
 		if (filter) {
-			dispatch(fetchRepositories(filter));
+			dispatch(fetchRepositories({ query: filter, perPage: 100, page: 1 }));
 		}
 	}, [filter, dispatch]);
 
 	useEffect(() => {
-		const startIndex = (currentPage - 1) * paginationCount;
-		const endIndex = startIndex + paginationCount;
-		const slicedRepositories = repositories.slice(startIndex, endIndex);
-		setDisplayedRows(convertToRowData(slicedRepositories));
-	}, [repositories, currentPage, paginationCount]);
+		if (repositories.length > 0) {
+			const startIndex = (currentPage - 1) * paginationCount;
+			const endIndex = startIndex + paginationCount;
+			const slicedRepositories = repositories.slice(startIndex, endIndex);
+			setDisplayedRows(convertToRowData(slicedRepositories));
+
+			if (endIndex >= repositories.length && hasMore) {
+				const nextPage = Math.ceil(repositories.length / 100) + 1;
+				dispatch(fetchRepositories({ query: filter, perPage: 100, page: nextPage }))
+					.then((response) => {
+						if (response.meta.requestStatus === 'fulfilled') {
+							if (response.payload.items.length === 0) {
+								setHasMore(false);
+							}
+						}
+					});
+			}
+		}
+	}, [repositories, currentPage, paginationCount, dispatch, filter, hasMore]);
 
 	const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
 		const newPaginationCount = Number(event.target.value);
@@ -79,7 +94,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 
 	return (
 		<div className={style.container}>
-			{status === 'loading' ? <Loading /> : (
+			{status === 'loading' ? <Loading /> : status === 'failed' ? <div>No gh-token, please refresh page</div> : (
 				<div className={style.main}>
 					<div className={style.left}>
 						<h1>Результаты поиска</h1>
@@ -115,7 +130,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 									&lt;
 								</button>
 								<button
-									disabled={currentPage === Math.ceil(repositories.length / paginationCount)}
+									disabled={currentPage === Math.ceil(repositories.length / paginationCount) && hasMore}
 									onClick={() => handlePageChange('next')}
 								>
 									&gt;
