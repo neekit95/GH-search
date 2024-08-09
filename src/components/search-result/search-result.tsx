@@ -14,6 +14,7 @@ interface Repository {
 	forks_count: number;
 	stargazers_count: number;
 	updated_at: string;
+	description: string;
 }
 
 interface RowData {
@@ -22,15 +23,19 @@ interface RowData {
 	forks_count: number;
 	stargazers_count: number;
 	updated_at: string;
+	description: string;
+	isChosen: boolean;
 }
 
-const convertToRowData = (repositories: Repository[]): RowData[] => {
+const convertToRowData = (repositories: Repository[], chosenRepo: string): RowData[] => {
 	return repositories.map(repo => ({
 		name: repo.name,
 		language: repo.language,
 		forks_count: repo.forks_count,
 		stargazers_count: repo.stargazers_count,
 		updated_at: repo.updated_at,
+		description: repo.description,
+		isChosen: repo.name === chosenRepo,
 	}));
 };
 
@@ -47,6 +52,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [displayedRows, setDisplayedRows] = useState<RowData[]>([]);
 	const [hasMore, setHasMore] = useState<boolean>(true);
+	const [chosenRepo, setChosenRepo] = useState<string>('');
 
 	useEffect(() => {
 		if (filter) {
@@ -59,14 +65,14 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 			const startIndex = (currentPage - 1) * paginationCount;
 			const endIndex = startIndex + paginationCount;
 			const slicedRepositories = repositories.slice(startIndex, endIndex);
-			setDisplayedRows(convertToRowData(slicedRepositories));
+			setDisplayedRows(convertToRowData(slicedRepositories, chosenRepo));
 
 			if (endIndex >= repositories.length && hasMore) {
 				const nextPage = Math.ceil(repositories.length / 100) + 1;
 				dispatch(fetchRepositories({ query: filter, perPage: 100, page: nextPage }))
 					.then((response) => {
 						if (response.meta.requestStatus === 'fulfilled') {
-							const payload = response.payload as { items: Repository[] };
+							const payload = response.payload as { items: Repository[], total_count: number };
 							if (payload.items.length === 0) {
 								setHasMore(false);
 							}
@@ -74,7 +80,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 					});
 			}
 		}
-	}, [repositories, currentPage, paginationCount, dispatch, filter, hasMore]);
+	}, [repositories, currentPage, paginationCount, dispatch, filter, hasMore, chosenRepo]);
 
 	const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
 		const newPaginationCount = Number(event.target.value);
@@ -93,6 +99,12 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 		});
 	};
 
+	const handleRowClick = (repoName: string) => {
+		setChosenRepo(prevChosenRepo => prevChosenRepo === repoName ? '' : repoName);
+	};
+
+	const chosenRepoDetails = repositories.find(repo => repo.name === chosenRepo);
+
 	return (
 		<div className={style.container}>
 			{status === 'loading' ? <Loading /> : status === 'failed' ? <div>No gh-token, please refresh page</div> : (
@@ -101,7 +113,10 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 						<h1>Результаты поиска</h1>
 						<div className={style.table}>
 							{repositories.length === 0 ? 'Ничего не найдено, повторите поиск' : (
-								<DataTable rows={displayedRows} />
+								<DataTable
+									rows={displayedRows}
+									onRowClick={handleRowClick}
+								/>
 							)}
 						</div>
 						<div className={style.pagination}>
@@ -141,7 +156,18 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 					</div>
 					{repositories.length !== 0 && (
 						<div className={style.right}>
-							Выберите репозиторий
+							{chosenRepoDetails ? (
+								<div className={style.repoDetails}>
+									<h2>{chosenRepoDetails.name}</h2>
+									<p><strong>Language:</strong> {chosenRepoDetails.language}</p>
+									<p><strong>Forks:</strong> {chosenRepoDetails.forks_count}</p>
+									<p><strong>Stars:</strong> {chosenRepoDetails.stargazers_count}</p>
+									<p><strong>Updated At:</strong> {chosenRepoDetails.updated_at}</p>
+									<p><strong>Description:</strong> {chosenRepoDetails.description}</p>
+								</div>
+							) : (
+								<p>Выберите репозиторий для просмотра деталей</p>
+							)}
 						</div>
 					)}
 				</div>

@@ -7,6 +7,7 @@ export interface Repository {
 	forks_count: number;
 	stargazers_count: number;
 	updated_at: string;
+	description: string;
 }
 
 export interface RepositoriesState {
@@ -31,7 +32,13 @@ export const fetchRepositories = createAsyncThunk(
 	'repositories/fetchRepositories',
 	async ({ query, perPage, page }: FetchRepositoriesParams) => {
 		const response = await axios.get(`https://api.github.com/search/repositories?q=${query}&per_page=${perPage}&page=${page}`);
-		return { items: response.data.items, total_count: response.data.total_count };  // Возвращаем и элементы, и общее количество
+		return {
+			items: response.data.items.map((repo: any) => ({
+				...repo,
+				description: repo.description || ''
+			})),
+			total_count: response.data.total_count
+		};
 	}
 );
 
