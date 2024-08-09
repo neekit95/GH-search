@@ -9,6 +9,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
 interface Repository {
+	id: number; // Добавлено поле id
 	name: string;
 	language: string;
 	forks_count: number;
@@ -18,6 +19,7 @@ interface Repository {
 }
 
 interface RowData {
+	id: number; // Добавлено поле id
 	name: string;
 	language: string;
 	forks_count: number;
@@ -27,15 +29,16 @@ interface RowData {
 	isChosen: boolean;
 }
 
-const convertToRowData = (repositories: Repository[], chosenRepo: string): RowData[] => {
+const convertToRowData = (repositories: Repository[], chosenRepoId: number): RowData[] => {
 	return repositories.map(repo => ({
+		id: repo.id,
 		name: repo.name,
 		language: repo.language,
 		forks_count: repo.forks_count,
 		stargazers_count: repo.stargazers_count,
 		updated_at: repo.updated_at,
 		description: repo.description,
-		isChosen: repo.name === chosenRepo,
+		isChosen: repo.id === chosenRepoId,
 	}));
 };
 
@@ -52,7 +55,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [displayedRows, setDisplayedRows] = useState<RowData[]>([]);
 	const [hasMore, setHasMore] = useState<boolean>(true);
-	const [chosenRepo, setChosenRepo] = useState<string>('');
+	const [chosenRepoId, setChosenRepoId] = useState<number | null>(null); // Используйте id
 
 	useEffect(() => {
 		if (filter) {
@@ -65,7 +68,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 			const startIndex = (currentPage - 1) * paginationCount;
 			const endIndex = startIndex + paginationCount;
 			const slicedRepositories = repositories.slice(startIndex, endIndex);
-			setDisplayedRows(convertToRowData(slicedRepositories, chosenRepo));
+			setDisplayedRows(convertToRowData(slicedRepositories, chosenRepoId ?? -1)); // Обработка id
 
 			if (endIndex >= repositories.length && hasMore) {
 				const nextPage = Math.ceil(repositories.length / 100) + 1;
@@ -80,7 +83,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 					});
 			}
 		}
-	}, [repositories, currentPage, paginationCount, dispatch, filter, hasMore, chosenRepo]);
+	}, [repositories, currentPage, paginationCount, dispatch, filter, hasMore, chosenRepoId]);
 
 	const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
 		const newPaginationCount = Number(event.target.value);
@@ -99,11 +102,11 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 		});
 	};
 
-	const handleRowClick = (repoName: string) => {
-		setChosenRepo(prevChosenRepo => prevChosenRepo === repoName ? '' : repoName);
+	const handleRowClick = (repoId: number) => {
+		setChosenRepoId(prevChosenRepoId => prevChosenRepoId === repoId ? null : repoId);
 	};
 
-	const chosenRepoDetails = repositories.find(repo => repo.name === chosenRepo);
+	const chosenRepoDetails = repositories.find(repo => repo.id === chosenRepoId);
 
 	return (
 		<div className={style.container}>
