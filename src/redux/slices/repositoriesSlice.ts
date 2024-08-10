@@ -23,7 +23,7 @@ export interface Repository {
 	// Описание репозитория.
 	description: string;
 
-	// Лицензия репозитория (может быть строкой или null).
+	// Лицензия репозитория
 	license: License | null;
 }
 
