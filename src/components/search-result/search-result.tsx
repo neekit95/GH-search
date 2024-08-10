@@ -76,8 +76,10 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	useEffect(() => {
 		if (filter) {
 			dispatch(clearRepositories());
-			setCurrentPage(1);
-			setHasMore(true);
+			setPaginationCount(10); // Сброс значения пагинации
+			setCurrentPage(1); // Сброс текущей страницы
+			setHasMore(true); // Обновление состояния hasMore
+			setChosenRepoId(''); // Сброс выбранного репозитория
 			fetchRepositoriesDebounced(filter, 1);
 		}
 	}, [filter, dispatch, fetchRepositoriesDebounced]);

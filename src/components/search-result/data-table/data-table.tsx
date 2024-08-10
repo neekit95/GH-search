@@ -30,16 +30,6 @@ interface DataTableProps {
 	onRowClick: (repoId: string) => void;
 }
 
-const renderLicense = (license: License | string | null) => {
-	if (license && typeof license === 'object') {
-		return license.name; // Здесь мы уверены, что license - объект типа License
-	} else if (typeof license === 'string') {
-		return license; // Если license - строка, просто возвращаем её
-	} else {
-		return 'No license available';
-	}
-};
-
 const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 	return (
 		<Table>
@@ -67,7 +57,9 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 						<TableCell>{row.stargazers_count}</TableCell>
 						<TableCell>{new Date(row.updated_at).toLocaleDateString()}</TableCell>
 						<TableCell>{row.description}</TableCell>
-						<TableCell>{row.license ? row.license.name : 'No license'}</TableCell>
+						<TableCell>
+							{row.license && typeof row.license === 'object' ? row.license.name : row.license || 'No license'}
+						</TableCell>
 					</TableRow>
 				))}
 			</TableBody>
