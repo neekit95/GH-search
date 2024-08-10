@@ -12,30 +12,27 @@ interface Repository {
 	license: string | null;
 }
 
-export interface RepositoriesState {
-	items: Repository[];
-	total_count: number;
+interface RepositoriesState {
+	data: Repository[];
 	status: 'idle' | 'loading' | 'succeeded' | 'failed';
 }
 
 const initialState: RepositoriesState = {
-	items: [],
-	total_count: 0,
+	data: [],
 	status: 'idle',
 };
 
 export const fetchRepositories = createAsyncThunk(
 	'repositories/fetchRepositories',
 	async ({ query, perPage, page }: { query: string; perPage: number; page: number }) => {
-		const response = await axios.get(`https://api.github.com/search/repositories?q=${query}&per_page=${perPage}&page=${page}`);
-		return {
-			items: response.data.items.map((repo: any) => ({
-				...repo,
-				description: repo.description || '',
-				license: repo.license?.name || null
-			})),
-			total_count: response.data.total_count,
-		};
+		const response = await axios.get(`https://api.github.com/search/repositories`, {
+			params: {
+				q: query,
+				per_page: perPage,
+				page,
+			},
+		});
+		return response.data.items;
 	}
 );
 
@@ -44,8 +41,7 @@ const repositoriesSlice = createSlice({
 	initialState,
 	reducers: {
 		clearRepositories(state) {
-			state.items = [];
-			state.total_count = 0;
+			state.data = []; // Очистка данных репозиториев
 		},
 	},
 	extraReducers: (builder) => {
@@ -53,10 +49,9 @@ const repositoriesSlice = createSlice({
 			.addCase(fetchRepositories.pending, (state) => {
 				state.status = 'loading';
 			})
-			.addCase(fetchRepositories.fulfilled, (state, action: PayloadAction<{ items: Repository[]; total_count: number }>) => {
-				state.items = action.payload.items;
-				state.total_count = action.payload.total_count;
+			.addCase(fetchRepositories.fulfilled, (state, action: PayloadAction<Repository[]>) => {
 				state.status = 'succeeded';
+				state.data = [...state.data, ...action.payload]; // Добавляем новые репозитории
 			})
 			.addCase(fetchRepositories.rejected, (state) => {
 				state.status = 'failed';

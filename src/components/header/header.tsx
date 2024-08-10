@@ -16,7 +16,6 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	};
 
 	const executeSearch = async (filter: string) => {
-		// status: loading
 		setLoadingState(true);
 		try {
 			dispatch(clearRepositories()); // Очищаем репозитории перед новым запросом
@@ -32,14 +31,12 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 
 	const handleSearchClick = () => {
 		if (filter.trim()) { // Проверяем, что фильтр не пустой
-			setLoadingState(true);
 			executeSearch(filter);
 		}
 	};
 
 	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === 'Enter' && filter.trim()) { // Проверяем, что фильтр не пустой
-			setLoadingState(true);
 			executeSearch(filter);
 		}
 	};

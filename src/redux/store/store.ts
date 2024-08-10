@@ -6,7 +6,7 @@ const store = configureStore({
     reducer: {
         loading: loadingSlice,
         repositories: repositoriesSlice,
-    },
+    }
 });
 
 export type RootState = ReturnType<typeof store.getState>;
