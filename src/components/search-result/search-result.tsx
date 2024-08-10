@@ -248,7 +248,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 					</div>
 					{chosenRepoDetails && (
 						<div className={style.right}>
-							<h2>Подробности о репозитории</h2>
+							<h2>{chosenRepoDetails.name}</h2>
 							<p><strong>Описание:</strong> {chosenRepoDetails.description || 'Нет описания'}</p>
 							<p><strong>Лицензия:</strong> {chosenRepoDetails.license ? chosenRepoDetails.license.name : 'Не указана'}</p>
 						</div>
