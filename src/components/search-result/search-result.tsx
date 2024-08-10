@@ -221,7 +221,8 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 									className={style.select}
 								>
 									{itemsPerPageOptions.map(option => (
-										<MenuItem key={option} value={option}>
+										<MenuItem key={option} value={option}
+										 className={style.menuItem}>
 											{option}
 											</MenuItem>
 									))}
