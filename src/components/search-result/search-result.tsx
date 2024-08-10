@@ -48,17 +48,18 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [chosenRepoId, setChosenRepoId] = useState<string>('');
 	const [loading, setLoading] = useState<boolean>(false);
-	const [error, setError] = useState<string | null>(null);
 	const [noResults, setNoResults] = useState<boolean>(false);
-	const [hasMore, setHasMore] = useState<boolean>(true); // Инициализация состояния hasMore
+	const [hasMore, setHasMore] = useState<boolean>(true);
+	const [error, setError] = useState<string | null>(null);
 
 	const fetchRepositoriesDebounced = useCallback(debounce((filter: string, page: number) => {
+		console.log(`Fetching repositories with filter: ${filter}, page: ${page}`);
 		setLoading(true);
-		setError(null);
 		setNoResults(false);
 		dispatch(fetchRepositories({ query: filter, perPage: 100, page }))
 			.unwrap()
 			.then((payload: Repository[]) => {
+				console.log(`Received ${payload.length} repositories`);
 				if (payload.length === 0) {
 					setNoResults(true);
 					setHasMore(false);
@@ -69,6 +70,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 				setLoading(false);
 			})
 			.catch(() => {
+				console.error('Error fetching repositories');
 				setLoading(false);
 				setError('Ошибка загрузки данных. Пожалуйста, попробуйте позже.');
 				setHasMore(false);
@@ -78,12 +80,13 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 
 	useEffect(() => {
 		if (filter) {
+			console.log(`Filter changed to: ${filter}`);
 			dispatch(clearRepositories());
 			setPaginationCount(10);
 			setCurrentPage(1);
 			setHasMore(true);
 			setChosenRepoId('');
-			setLoading(true); // Показываем загрузку перед запросом
+			setLoading(true);
 			fetchRepositoriesDebounced(filter, 1);
 		}
 	}, [filter, dispatch, fetchRepositoriesDebounced]);
@@ -93,6 +96,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 			const startIndex = (currentPage - 1) * paginationCount;
 			const endIndex = startIndex + paginationCount;
 			const slicedRepositories = repositories.slice(startIndex, endIndex);
+			console.log(`Rendering DataTable with ${slicedRepositories.length} rows`);
 			return convertToRowData(slicedRepositories, chosenRepoId);
 		}
 		return [];
@@ -106,10 +110,11 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 			const endIndex = startIndex + paginationCount;
 			if (endIndex >= repositories.length && hasMore) {
 				const nextPage = Math.ceil(repositories.length / 100) + 1;
+				console.log(`Fetching next page: ${nextPage}`);
 				fetchRepositoriesDebounced(filter, nextPage);
 			}
 		}
-	}, [repositories, currentPage, paginationCount, fetchRepositoriesDebounced, filter, hasMore, chosenRepoId, loading, error]);
+	}, [repositories, currentPage, paginationCount, fetchRepositoriesDebounced, filter, hasMore, loading, error]);
 
 	const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
 		const newPaginationCount = Number(event.target.value);
@@ -118,13 +123,11 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	};
 
 	const handlePageChange = (direction: 'prev' | 'next') => {
-		setCurrentPage(prevPage => {
-			if (direction === 'prev') {
-				return Math.max(prevPage - 1, 1);
-			} else {
-				return Math.min(prevPage + 1, totalPages);
-			}
-		});
+		if (direction === 'prev' && currentPage > 1) {
+			setCurrentPage(prevPage => prevPage - 1);
+		} else if (direction === 'next' && currentPage < totalPages && !loading) {
+			setCurrentPage(prevPage => prevPage + 1);
+		}
 	};
 
 	const handleRowClick = (repoId: string) => {
@@ -135,9 +138,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 
 	return (
 		<div className={style.container}>
-			{loading && !error && !noResults ? (
-				<Loading />
-			) : error ? (
+			{error ? (
 				<div className={style.nothing}>{error}</div>
 			) : noResults ? (
 				<div className={style.nothing}>Ничего не найдено, повторите поиск</div>
@@ -178,7 +179,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 									&lt;
 								</button>
 								<button
-									disabled={currentPage === totalPages && !hasMore}
+									disabled={currentPage === totalPages || loading}
 									onClick={() => handlePageChange('next')}
 								>
 									&gt;

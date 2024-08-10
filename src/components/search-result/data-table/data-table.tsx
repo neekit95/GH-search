@@ -31,6 +31,8 @@ interface DataTableProps {
 }
 
 const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
+	console.log(`Rendering DataTable with ${rows.length} rows`);
+
 	return (
 		<Table>
 			<TableHead>
@@ -48,7 +50,10 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 				{rows.map((row) => (
 					<TableRow
 						key={row.id}
-						onClick={() => onRowClick(row.id)}
+						onClick={() => {
+							console.log(`Row clicked: ${row.id}`);
+							onRowClick(row.id);
+						}}
 						selected={row.isChosen}
 					>
 						<TableCell>{row.name}</TableCell>

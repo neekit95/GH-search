@@ -26,8 +26,11 @@ const initialState: RepositoriesState = {
 export const fetchRepositories = createAsyncThunk(
 	'repositories/fetchRepositories',
 	async ({ query, perPage, page }: { query: string; perPage: number; page: number }) => {
+		console.log(`Fetching repositories with query: ${query}, perPage: ${perPage}, page: ${page}`);
 		const response = await fetch(`https://api.github.com/search/repositories?q=${query}&per_page=${perPage}&page=${page}`);
-		return (await response.json()).items as Repository[];
+		const data = await response.json();
+		console.log(`Received ${data.items.length} repositories`);
+		return data.items as Repository[];
 	}
 );
 
@@ -36,6 +39,7 @@ const repositoriesSlice = createSlice({
 	initialState,
 	reducers: {
 		clearRepositories: (state) => {
+			console.log('Clearing repositories');
 			state.items = [];
 			state.status = 'idle';
 			state.error = null;
@@ -44,13 +48,16 @@ const repositoriesSlice = createSlice({
 	extraReducers: (builder) => {
 		builder
 			.addCase(fetchRepositories.pending, (state) => {
+				console.log('Fetching repositories pending');
 				state.status = 'loading';
 			})
 			.addCase(fetchRepositories.fulfilled, (state, action) => {
+				console.log('Fetching repositories succeeded');
 				state.items = [...state.items, ...action.payload];
 				state.status = 'succeeded';
 			})
 			.addCase(fetchRepositories.rejected, (state, action) => {
+				console.error('Fetching repositories failed', action.error.message);
 				state.status = 'failed';
 				state.error = action.error.message || null;
 			});

@@ -14,18 +14,21 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const newFilter = event.target.value;
 		if (newFilter !== filter) {
+			console.log(`Filter changed to: ${newFilter}`);
 			setFilter(newFilter);
 		}
 	};
 
 	const executeSearch = async (filter: string) => {
+		console.log(`Executing search with filter: ${filter}`);
 		setLoadingState(true);
 		try {
 			dispatch(clearRepositories()); // Очищаем репозитории перед новым запросом
 			await dispatch(fetchRepositories({ query: filter, perPage: 100, page: 1 })).unwrap();
 			onFilterChange(filter);
+			console.log(`Search completed for filter: ${filter}`);
 		} catch (error) {
-			console.error("Ошибка при выполнении поиска:", error);
+			console.error("Error during search execution:", error);
 		} finally {
 			setLoadingState(false);
 		}
@@ -34,11 +37,14 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	const handleSearchClick = () => {
 		if (filter.trim()) { // Проверяем, что фильтр не пустой
 			executeSearch(filter);
+		} else {
+			console.log('Filter is empty, search not executed');
 		}
 	};
 
 	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === 'Enter' && filter.trim()) { // Проверяем, что фильтр не пустой
+			console.log(`Enter key pressed with filter: ${filter}`);
 			executeSearch(filter);
 		}
 	};
