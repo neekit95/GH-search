@@ -1,11 +1,19 @@
+import React, { useState } from 'react';
 import Header from '../header/header.tsx';
 import style from './app.module.scss';
-import { useState } from "react";
-import SearchResult from "../search-result/search-result.tsx";
+import SearchResult from '../search-result/search-result.tsx';
 
-const App = () => {
-	const [filter, setFilter] = useState('');
+/**
+ * Главный компонент приложения.
+ * @returns {JSX.Element} Компонент App.
+ */
+const App: React.FC = () => {
+	const [filter, setFilter] = useState<string>('');
 
+	/**
+	 * Обрабатывает изменение фильтра.
+	 * @param newFilter Новый фильтр.
+	 */
 	const handleFilterChange = (newFilter: string) => {
 		setFilter(newFilter);
 	};

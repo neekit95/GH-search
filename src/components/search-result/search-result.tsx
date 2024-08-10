@@ -1,28 +1,47 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchRepositories, clearRepositories, Repository } from '../../redux/slices/repositoriesSlice';
+import { clearRepositories, fetchRepositories, Repository } from '../../redux/slices/repositoriesSlice';
 import { AppDispatch, RootState } from '../../redux/store/store';
 import DataTable from './data-table/data-table';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import debounce from 'lodash.debounce';
 import style from './search-result.module.scss';
+import {License} from "./data-table/data-table";
 
 interface RowData {
+	// Уникальный идентификатор репозитория.
 	id: string;
+
+	// Название репозитория.
 	name: string;
+
+	// Язык программирования, используемый в репозитории.
 	language: string;
+
+	// Количество форков репозитория.
 	forks_count: number;
+
+	// Количество звезд репозитория.
 	stargazers_count: number;
+
+	// Дата последнего обновления репозитория.
 	updated_at: string;
+
+	// Описание репозитория.
 	description: string;
-	license: string | null;
+
+	// Лицензия репозитория.
+	license: License | null;
+
+	// Флаг, указывающий, выбран ли репозиторий.
 	isChosen: boolean;
 }
-
+// 	Вывод на страницу по количеству элементов
 const itemsPerPageOptions = [10, 20, 30];
 
 interface SearchResultProps {
+	//  Фильтр для поиска репозиториев.
 	filter: string;
 }
 
@@ -41,11 +60,10 @@ const convertToRowData = (repositories: Repository[], chosenRepoId: string): Row
 		stargazers_count: repo.stargazers_count,
 		updated_at: repo.updated_at,
 		description: repo.description,
-		license: repo.license ? repo.license.name : null,
+		license: repo.license,
 		isChosen: repo.id === chosenRepoId,
 	}));
 };
-
 /**
  * Компонент для отображения результатов поиска с пагинацией и сортировкой.
  * @param filter Фильтр для поиска репозиториев.
@@ -221,10 +239,9 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 									className={style.select}
 								>
 									{itemsPerPageOptions.map(option => (
-										<MenuItem key={option} value={option}
-										 className={style.menuItem}>
+										<MenuItem key={option} value={option} className={style.menuItem}>
 											{option}
-											</MenuItem>
+										</MenuItem>
 									))}
 								</Select>
 							</div>
@@ -251,7 +268,9 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 						<div className={style.right}>
 							<h2>{chosenRepoDetails.name}</h2>
 							<p><strong>Описание:</strong> {chosenRepoDetails.description || 'Нет описания'}</p>
-							<p><strong>Лицензия:</strong> {chosenRepoDetails.license ? chosenRepoDetails.license.name : 'Не указана'}</p>
+							<p>
+								<strong>Лицензия:</strong> {chosenRepoDetails.license ? chosenRepoDetails.license.name : 'Не указана'}
+							</p>
 						</div>
 					)}
 				</div>

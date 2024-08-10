@@ -11,6 +11,10 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	const { setLoadingState } = useLoading();
 	const dispatch = useDispatch<AppDispatch>();
 
+	/**
+	 * Обрабатывает изменение значения фильтра в поле ввода.
+	 * @param event Событие изменения значения.
+	 */
 	const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const newFilter = event.target.value;
 		if (newFilter !== filter) {
@@ -19,6 +23,10 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 		}
 	};
 
+	/**
+	 * Выполняет поиск с указанным фильтром.
+	 * @param filter Фильтр для поиска.
+	 */
 	const executeSearch = async (filter: string) => {
 		console.log(`Executing search with filter: ${filter}`);
 		setLoadingState(true);
@@ -34,6 +42,8 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 		}
 	};
 
+	// Обрабатывает клик по кнопке поиска.
+
 	const handleSearchClick = () => {
 		if (filter.trim()) { // Проверяем, что фильтр не пустой
 			executeSearch(filter);
@@ -42,6 +52,10 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 		}
 	};
 
+	/**
+	 * Обрабатывает нажатие клавиши Enter в поле ввода.
+	 * @param event Событие нажатия клавиши.
+	 */
 	const isEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === 'Enter' && filter.trim()) { // Проверяем, что фильтр не пустой
 			console.log(`Enter key pressed with filter: ${filter}`);
