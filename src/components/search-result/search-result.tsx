@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRepositories, clearRepositories, Repository } from '../../redux/slices/repositoriesSlice';
 import { AppDispatch, RootState } from '../../redux/store/store';
@@ -46,22 +46,19 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const { items: repositories } = useSelector((state: RootState) => state.repositories);
 	const [paginationCount, setPaginationCount] = useState<number>(10);
 	const [currentPage, setCurrentPage] = useState<number>(1);
-	const [displayedRows, setDisplayedRows] = useState<RowData[]>([]);
-	const [hasMore, setHasMore] = useState<boolean>(true);
 	const [chosenRepoId, setChosenRepoId] = useState<string>('');
 	const [loading, setLoading] = useState<boolean>(false);
-	const [error, setError] = useState<boolean>(false);
+	const [error, setError] = useState<string | null>(null);
 	const [noResults, setNoResults] = useState<boolean>(false);
+	const [hasMore, setHasMore] = useState<boolean>(true); // Инициализация состояния hasMore
 
-	// Дебаунсинг функции запроса данных
 	const fetchRepositoriesDebounced = useCallback(debounce((filter: string, page: number) => {
 		setLoading(true);
-		setError(false);
+		setError(null);
 		setNoResults(false);
 		dispatch(fetchRepositories({ query: filter, perPage: 100, page }))
-			.then((response) => {
-				const payload = response.payload as Repository[];
-				setLoading(false);
+			.unwrap()
+			.then((payload: Repository[]) => {
 				if (payload.length === 0) {
 					setNoResults(true);
 					setHasMore(false);
@@ -69,10 +66,11 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 					setHasMore(true);
 					setNoResults(false);
 				}
+				setLoading(false);
 			})
 			.catch(() => {
 				setLoading(false);
-				setError(true);
+				setError('Ошибка загрузки данных. Пожалуйста, попробуйте позже.');
 				setHasMore(false);
 				setNoResults(false);
 			});
@@ -85,17 +83,27 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 			setCurrentPage(1);
 			setHasMore(true);
 			setChosenRepoId('');
+			setLoading(true); // Показываем загрузку перед запросом
 			fetchRepositoriesDebounced(filter, 1);
 		}
 	}, [filter, dispatch, fetchRepositoriesDebounced]);
+
+	const displayedRows = useMemo(() => {
+		if (repositories.length > 0) {
+			const startIndex = (currentPage - 1) * paginationCount;
+			const endIndex = startIndex + paginationCount;
+			const slicedRepositories = repositories.slice(startIndex, endIndex);
+			return convertToRowData(slicedRepositories, chosenRepoId);
+		}
+		return [];
+	}, [repositories, currentPage, paginationCount, chosenRepoId]);
+
+	const totalPages = useMemo(() => Math.ceil(repositories.length / paginationCount), [repositories.length, paginationCount]);
 
 	useEffect(() => {
 		if (repositories.length > 0 && !loading && !error) {
 			const startIndex = (currentPage - 1) * paginationCount;
 			const endIndex = startIndex + paginationCount;
-			const slicedRepositories = repositories.slice(startIndex, endIndex);
-			setDisplayedRows(convertToRowData(slicedRepositories, chosenRepoId));
-
 			if (endIndex >= repositories.length && hasMore) {
 				const nextPage = Math.ceil(repositories.length / 100) + 1;
 				fetchRepositoriesDebounced(filter, nextPage);
@@ -111,7 +119,6 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 
 	const handlePageChange = (direction: 'prev' | 'next') => {
 		setCurrentPage(prevPage => {
-			const totalPages = Math.ceil(repositories.length / paginationCount);
 			if (direction === 'prev') {
 				return Math.max(prevPage - 1, 1);
 			} else {
@@ -124,14 +131,14 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 		setChosenRepoId(prevChosenRepoId => prevChosenRepoId === repoId ? '' : repoId);
 	};
 
-	const chosenRepoDetails = repositories.find(repo => repo.id === chosenRepoId);
+	const chosenRepoDetails = useMemo(() => repositories.find(repo => repo.id === chosenRepoId), [repositories, chosenRepoId]);
 
 	return (
 		<div className={style.container}>
-			{loading ? (
+			{loading && !error && !noResults ? (
 				<Loading />
 			) : error ? (
-				<div className={style.nothing}>Ошибка загрузки данных. Пожалуйста, попробуйте позже.</div>
+				<div className={style.nothing}>{error}</div>
 			) : noResults ? (
 				<div className={style.nothing}>Ничего не найдено, повторите поиск</div>
 			) : (
@@ -171,7 +178,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 									&lt;
 								</button>
 								<button
-									disabled={currentPage === Math.ceil(repositories.length / paginationCount) && !hasMore}
+									disabled={currentPage === totalPages && !hasMore}
 									onClick={() => handlePageChange('next')}
 								>
 									&gt;
