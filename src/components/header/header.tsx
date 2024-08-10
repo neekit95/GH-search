@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from './header.module.scss';
 import { Button } from '@mui/material';
-import { useLoading } from "../../redux/hooks/useLoading.ts";
+import useLoading from "../../redux/hooks/useLoading.ts";
 import { useDispatch } from 'react-redux';
 import { fetchRepositories, clearRepositories } from '../../redux/slices/repositoriesSlice.ts';
 import { AppDispatch } from '../../redux/store/store.ts';

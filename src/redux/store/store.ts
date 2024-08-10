@@ -1,15 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit';
-import loadingSlice from '../slices/loadingSlice';
-import repositoriesSlice from '../slices/repositoriesSlice';
+import repositoriesReducer from '../slices/repositoriesSlice';
+import loadingReducer from '../slices/loadingSlice';
 
 const store = configureStore({
     reducer: {
-        loading: loadingSlice,
-        repositories: repositoriesSlice,
-    }
+        repositories: repositoriesReducer,
+        loading: loadingReducer,
+    },
 });
 
-export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;
 
 export default store;

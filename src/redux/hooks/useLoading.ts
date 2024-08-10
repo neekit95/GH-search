@@ -1,13 +1,12 @@
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store/store.ts';
-import { setLoading } from '../slices/loadingSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../store/store';
 
-export const useLoading = () => {
+const useLoading = () => {
+	const isLoading = useSelector((state: RootState) => state.loading);
 	const dispatch = useDispatch();
-	const isLoading = useSelector((state: RootState) => state.loading.isLoading);
 
 	const setLoadingState = (loading: boolean) => {
-		dispatch(setLoading(loading));
+		dispatch({ type: 'loading/setLoadingState', payload: loading });
 	};
 
 	return {
@@ -15,3 +14,5 @@ export const useLoading = () => {
 		setLoadingState,
 	};
 };
+
+export default useLoading;
