@@ -39,8 +39,8 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   padding: 10px 20px;
   width: 30%;
   background-color: #F2F2F2;
@@ -53,6 +53,11 @@
   -ms-word-wrap: break-word;
   word-wrap: break-word;
   flex-wrap: wrap;
+  p {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 
 h1 {

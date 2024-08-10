@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRepositories, clearRepositories, Repository } from '../../redux/slices/repositoriesSlice';
 import { AppDispatch, RootState } from '../../redux/store/store';
-import Loading from '../loading/loading';
 import DataTable from './data-table/data-table';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -21,6 +20,18 @@ interface RowData {
 	isChosen: boolean;
 }
 
+const itemsPerPageOptions = [10, 20, 30];
+
+interface SearchResultProps {
+	filter: string;
+}
+
+/**
+ * Преобразует массив репозиториев в формат данных для строки таблицы.
+ * @param repositories Массив репозиториев.
+ * @param chosenRepoId ID выбранного репозитория.
+ * @returns Массив данных для строк таблицы.
+ */
 const convertToRowData = (repositories: Repository[], chosenRepoId: string): RowData[] => {
 	return repositories.map((repo: Repository) => ({
 		id: repo.id,
@@ -30,17 +41,16 @@ const convertToRowData = (repositories: Repository[], chosenRepoId: string): Row
 		stargazers_count: repo.stargazers_count,
 		updated_at: repo.updated_at,
 		description: repo.description,
-		license: repo.license,
+		license: repo.license ? repo.license.name : null,
 		isChosen: repo.id === chosenRepoId,
 	}));
 };
 
-const itemsPerPageOptions = [10, 20, 30];
-
-interface SearchResultProps {
-	filter: string;
-}
-
+/**
+ * Компонент для отображения результатов поиска с пагинацией и сортировкой.
+ * @param filter Фильтр для поиска репозиториев.
+ * @returns JSX.Element
+ */
 const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const dispatch = useDispatch<AppDispatch>();
 	const { items: repositories } = useSelector((state: RootState) => state.repositories);
@@ -51,15 +61,20 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const [noResults, setNoResults] = useState<boolean>(false);
 	const [hasMore, setHasMore] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
+	const [sortBy, setSortBy] = useState<string>('stargazers_count');
+	const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
+	/**
+	 * Дебаунс-функция для получения репозиториев с задержкой.
+	 * @param filter Фильтр для поиска репозиториев.
+	 * @param page Номер страницы для получения данных.
+	 */
 	const fetchRepositoriesDebounced = useCallback(debounce((filter: string, page: number) => {
-		console.log(`Fetching repositories with filter: ${filter}, page: ${page}`);
 		setLoading(true);
 		setNoResults(false);
 		dispatch(fetchRepositories({ query: filter, perPage: 100, page }))
 			.unwrap()
 			.then((payload: Repository[]) => {
-				console.log(`Received ${payload.length} repositories`);
 				if (payload.length === 0) {
 					setNoResults(true);
 					setHasMore(false);
@@ -70,7 +85,6 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 				setLoading(false);
 			})
 			.catch(() => {
-				console.error('Error fetching repositories');
 				setLoading(false);
 				setError('Ошибка загрузки данных. Пожалуйста, попробуйте позже.');
 				setHasMore(false);
@@ -80,7 +94,6 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 
 	useEffect(() => {
 		if (filter) {
-			console.log(`Filter changed to: ${filter}`);
 			dispatch(clearRepositories());
 			setPaginationCount(10);
 			setCurrentPage(1);
@@ -91,17 +104,38 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 		}
 	}, [filter, dispatch, fetchRepositoriesDebounced]);
 
+	/**
+	 * Сортирует репозитории по выбранному полю и направлению сортировки.
+	 * @returns Отсортированный массив репозиториев.
+	 */
+	const sortedRepositories = useMemo(() => {
+		return [...repositories].sort((a, b) => {
+			const aValue = a[sortBy as keyof Repository] ?? '';
+			const bValue = b[sortBy as keyof Repository] ?? '';
+			if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+			if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+			return 0;
+		});
+	}, [repositories, sortBy, sortDirection]);
+
+	/**
+	 * Определяет данные для отображения на текущей странице.
+	 * @returns Массив данных для строк таблицы.
+	 */
 	const displayedRows = useMemo(() => {
-		if (repositories.length > 0) {
+		if (sortedRepositories.length > 0) {
 			const startIndex = (currentPage - 1) * paginationCount;
 			const endIndex = startIndex + paginationCount;
-			const slicedRepositories = repositories.slice(startIndex, endIndex);
-			console.log(`Rendering DataTable with ${slicedRepositories.length} rows`);
+			const slicedRepositories = sortedRepositories.slice(startIndex, endIndex);
 			return convertToRowData(slicedRepositories, chosenRepoId);
 		}
 		return [];
-	}, [repositories, currentPage, paginationCount, chosenRepoId]);
+	}, [sortedRepositories, currentPage, paginationCount, chosenRepoId]);
 
+	/**
+	 * Вычисляет общее количество страниц.
+	 * @returns Общее количество страниц.
+	 */
 	const totalPages = useMemo(() => Math.ceil(repositories.length / paginationCount), [repositories.length, paginationCount]);
 
 	useEffect(() => {
@@ -110,18 +144,25 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 			const endIndex = startIndex + paginationCount;
 			if (endIndex >= repositories.length && hasMore) {
 				const nextPage = Math.ceil(repositories.length / 100) + 1;
-				console.log(`Fetching next page: ${nextPage}`);
 				fetchRepositoriesDebounced(filter, nextPage);
 			}
 		}
 	}, [repositories, currentPage, paginationCount, fetchRepositoriesDebounced, filter, hasMore, loading, error]);
 
+	/**
+	 * Обрабатывает изменение количества строк на странице.
+	 * @param event Событие изменения значения.
+	 */
 	const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
 		const newPaginationCount = Number(event.target.value);
 		setPaginationCount(newPaginationCount);
-		setCurrentPage(1);
+		setCurrentPage(1);  // Сбрасываем текущую страницу на первую
 	};
 
+	/**
+	 * Обрабатывает изменение текущей страницы.
+	 * @param direction Направление изменения страницы ('prev' или 'next').
+	 */
 	const handlePageChange = (direction: 'prev' | 'next') => {
 		if (direction === 'prev' && currentPage > 1) {
 			setCurrentPage(prevPage => prevPage - 1);
@@ -130,8 +171,23 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 		}
 	};
 
+	/**
+	 * Обрабатывает нажатие на строку таблицы.
+	 * @param repoId ID репозитория.
+	 */
 	const handleRowClick = (repoId: string) => {
 		setChosenRepoId(prevChosenRepoId => prevChosenRepoId === repoId ? '' : repoId);
+	};
+
+	/**
+	 * Обрабатывает изменение сортировки по полю.
+	 * @param field Поле для сортировки.
+	 */
+	const handleSort = (field: string) => {
+		const newDirection = sortBy === field && sortDirection === 'asc' ? 'desc' : 'asc';
+		setSortBy(field);
+		setSortDirection(newDirection);
+		setCurrentPage(1);  // Сбрасываем текущую страницу на первую при изменении сортировки
 	};
 
 	const chosenRepoDetails = useMemo(() => repositories.find(repo => repo.id === chosenRepoId), [repositories, chosenRepoId]);
@@ -150,6 +206,9 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 							<DataTable
 								rows={displayedRows}
 								onRowClick={handleRowClick}
+								sortBy={sortBy}
+								sortDirection={sortDirection}
+								onSort={handleSort}
 							/>
 						</div>
 						<div className={style.pagination}>
@@ -164,38 +223,34 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 									{itemsPerPageOptions.map(option => (
 										<MenuItem key={option} value={option}>
 											{option}
-										</MenuItem>
+											</MenuItem>
 									))}
 								</Select>
 							</div>
 							<div className={style.paginationElements}>
-								{(currentPage - 1) * paginationCount + 1} - {Math.min(currentPage * paginationCount, repositories.length)} of {repositories.length}
+								{(currentPage - 1) * paginationCount + 1} - {Math.min(currentPage * paginationCount, repositories.length)} из {repositories.length}
 							</div>
 							<div className={style.paginationButtons}>
 								<button
-									disabled={currentPage === 1}
 									onClick={() => handlePageChange('prev')}
+									disabled={currentPage === 1 || loading}
 								>
-									&lt;
+									&laquo;
 								</button>
 								<button
-									disabled={currentPage === totalPages || loading}
 									onClick={() => handlePageChange('next')}
+									disabled={!hasMore || loading}
 								>
-									&gt;
+									&raquo;
 								</button>
 							</div>
 						</div>
 					</div>
 					{chosenRepoDetails && (
 						<div className={style.right}>
-							<h2>{chosenRepoDetails.name}</h2>
-							<p><strong>Language:</strong> {chosenRepoDetails.language}</p>
-							<p><strong>Forks:</strong> {chosenRepoDetails.forks_count}</p>
-							<p><strong>Stars:</strong> {chosenRepoDetails.stargazers_count}</p>
-							<p><strong>Last Updated:</strong> {chosenRepoDetails.updated_at}</p>
-							<p><strong>Description:</strong> {chosenRepoDetails.description}</p>
-							<p><strong>License:</strong> {chosenRepoDetails.license}</p>
+							<h2>Подробности о репозитории</h2>
+							<p><strong>Описание:</strong> {chosenRepoDetails.description || 'Нет описания'}</p>
+							<p><strong>Лицензия:</strong> {chosenRepoDetails.license ? chosenRepoDetails.license.name : 'Не указана'}</p>
 						</div>
 					)}
 				</div>

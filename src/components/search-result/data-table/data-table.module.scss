@@ -1,47 +1,25 @@
-.tableContainer {
-  width: 100%;
-  box-shadow: none !important;
-text-align:left;
-}
-
 .table {
-  min-width: 650px;
+  width: 100%;
   border-collapse: collapse;
-  .tableCell {
-    text-align: left;
-    font-size: 18px;
-  }
 }
 
 .tableHead {
-  border:0;
+  border: 0;
   border-bottom: 1px solid #ddd;
 }
 
 .tableCell {
   border: none;
   padding: 16px;
+  font-size: 18px;
 }
-
 
 .tableRow {
   border-bottom: 1px solid #ddd;
-}
-
-.tableCell:last-child {
-  border-right: none;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-
-
-tr:hover {
-  background-color: #f5f5f5;
-  cursor: pointer;
+  &:hover {
+    background-color: #f5f5f5;
+    cursor: pointer;
+  }
 }
 
 .chosen {
