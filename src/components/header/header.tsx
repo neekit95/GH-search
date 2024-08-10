@@ -12,7 +12,10 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 	const dispatch = useDispatch<AppDispatch>();
 
 	const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setFilter(event.target.value);
+		const newFilter = event.target.value;
+		if (newFilter !== filter) {
+			setFilter(newFilter);
+		}
 	};
 
 	const executeSearch = async (filter: string) => {
@@ -22,8 +25,7 @@ const Header: React.FC<{ onFilterChange: (filter: string) => void }> = ({ onFilt
 			await dispatch(fetchRepositories({ query: filter, perPage: 100, page: 1 })).unwrap();
 			onFilterChange(filter);
 		} catch (error) {
-			const errorMessage = (error as Error).message || 'Ошибка при выполнении запроса';
-			console.error("Ошибка при выполнении поиска:", errorMessage);
+			console.error("Ошибка при выполнении поиска:", error);
 		} finally {
 			setLoadingState(false);
 		}

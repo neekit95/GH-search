@@ -1,20 +1,44 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+
+interface License {
+	key: string;
+	name: string;
+	spdx_id: string;
+	url: string;
+	node_id: string;
+}
+
+interface RowData {
+	id: string;
+	name: string;
+	language: string;
+	forks_count: number;
+	stargazers_count: number;
+	updated_at: string;
+	description: string;
+	license: License | string | null;
+	isChosen: boolean;
+}
 
 interface DataTableProps {
-	rows: {
-		id: string;
-		name: string;
-		language: string;
-		forks_count: number;
-		stargazers_count: number;
-		updated_at: string;
-		description: string;
-		license: string | null;
-		isChosen: boolean;
-	}[];
+	rows: RowData[];
 	onRowClick: (repoId: string) => void;
 }
+
+const renderLicense = (license: License | string | null) => {
+	if (license && typeof license === 'object') {
+		return license.name; // Здесь мы уверены, что license - объект типа License
+	} else if (typeof license === 'string') {
+		return license; // Если license - строка, просто возвращаем её
+	} else {
+		return 'No license available';
+	}
+};
 
 const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 	return (
@@ -25,7 +49,7 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 					<TableCell>Language</TableCell>
 					<TableCell>Forks</TableCell>
 					<TableCell>Stars</TableCell>
-					<TableCell>Last Updated</TableCell>
+					<TableCell>Updated</TableCell>
 					<TableCell>Description</TableCell>
 					<TableCell>License</TableCell>
 				</TableRow>
@@ -35,15 +59,15 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 					<TableRow
 						key={row.id}
 						onClick={() => onRowClick(row.id)}
-						style={{ backgroundColor: row.isChosen ? '#f0f0f0' : 'transparent' }}
+						selected={row.isChosen}
 					>
 						<TableCell>{row.name}</TableCell>
 						<TableCell>{row.language}</TableCell>
 						<TableCell>{row.forks_count}</TableCell>
 						<TableCell>{row.stargazers_count}</TableCell>
-						<TableCell>{row.updated_at}</TableCell>
+						<TableCell>{new Date(row.updated_at).toLocaleDateString()}</TableCell>
 						<TableCell>{row.description}</TableCell>
-						<TableCell>{row.license}</TableCell>
+						<TableCell>{row.license ? row.license.name : 'No license'}</TableCell>
 					</TableRow>
 				))}
 			</TableBody>
@@ -51,4 +75,4 @@ const DataTable: React.FC<DataTableProps> = ({ rows, onRowClick }) => {
 	);
 };
 
-export default React.memo(DataTable);
+export default DataTable;

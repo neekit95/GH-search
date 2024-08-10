@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import style from './search-result.module.scss';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchRepositories, clearRepositories } from '../../redux/slices/repositoriesSlice';
-import { AppDispatch, RootState } from "../../redux/store/store";
-import Loading from "../loading/loading";
-import DataTable from "./data-table/data-table";
+import { fetchRepositories, clearRepositories, Repository } from '../../redux/slices/repositoriesSlice';
+import { AppDispatch, RootState } from '../../redux/store/store';
+import Loading from '../loading/loading';
+import DataTable from './data-table/data-table';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import debounce from 'lodash.debounce';
+import style from './search-result.module.scss';
 
-interface Repository {
-	id: string;
+interface License {
+	key: string;
 	name: string;
-	language: string;
-	forks_count: number;
-	stargazers_count: number;
-	updated_at: string;
-	description: string;
-	license: string | null;
+	spdx_id: string;
+	url: string;
+	node_id: string;
 }
 
 interface RowData {
@@ -28,12 +25,12 @@ interface RowData {
 	stargazers_count: number;
 	updated_at: string;
 	description: string;
-	license: string | null;
+	license: License | string | null;
 	isChosen: boolean;
 }
 
 const convertToRowData = (repositories: Repository[], chosenRepoId: string): RowData[] => {
-	return repositories.map((repo) => ({
+	return repositories.map((repo: Repository) => ({
 		id: repo.id,
 		name: repo.name,
 		language: repo.language,
@@ -62,23 +59,24 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 	const [chosenRepoId, setChosenRepoId] = useState<string>('');
 
 	// Дебаунсинг функции запроса данных
-	const fetchRepositoriesDebounced = debounce((filter: string, page: number) => {
+	const fetchRepositoriesDebounced = useCallback(debounce((filter: string, page: number) => {
 		dispatch(fetchRepositories({ query: filter, perPage: 100, page }))
-			.then((response: any) => {
-				const payload = response.payload as { items: Repository[] };
-				if (payload.items.length === 0) {
+			.then((response) => {
+				const payload = response.payload as Repository[];
+				if (payload.length === 0) {
 					setHasMore(false);
 				}
 			})
 			.catch(() => {
+				console.log('Error fetching more data');
 				setHasMore(false);
 			});
-	}, 500);
+	}, 500), [dispatch]);
 
 	useEffect(() => {
 		if (filter) {
-			dispatch(clearRepositories()); // Очищаем старые данные перед новым запросом
-			setCurrentPage(1); // Сбрасываем пагинацию
+			dispatch(clearRepositories());
+			setCurrentPage(1);
 			setHasMore(true);
 			fetchRepositoriesDebounced(filter, 1);
 		}
@@ -98,14 +96,6 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 		}
 	}, [repositories, currentPage, paginationCount, fetchRepositoriesDebounced, filter, hasMore, chosenRepoId]);
 
-	useEffect(() => {
-		if (repositories.length > 0) {
-			const startIndex = (currentPage - 1) * paginationCount;
-			const endIndex = startIndex + paginationCount;
-			setDisplayedRows(convertToRowData(repositories.slice(startIndex, endIndex), chosenRepoId));
-		}
-	}, [currentPage, paginationCount, repositories, chosenRepoId]);
-
 	const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
 		const newPaginationCount = Number(event.target.value);
 		setPaginationCount(newPaginationCount);
@@ -114,7 +104,7 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 
 	const handlePageChange = (direction: 'prev' | 'next') => {
 		setCurrentPage(prevPage => {
-			const totalPages = Math.ceil((repositories.length || 0) / paginationCount);
+			const totalPages = Math.ceil(repositories.length / paginationCount);
 			if (direction === 'prev') {
 				return Math.max(prevPage - 1, 1);
 			} else {
@@ -125,6 +115,16 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 
 	const handleRowClick = (repoId: string) => {
 		setChosenRepoId(prevChosenRepoId => prevChosenRepoId === repoId ? '' : repoId);
+	};
+
+	const renderLicense = (license: License | string | null) => {
+		if (license && typeof license === 'object') {
+			return license.name;
+		} else if (typeof license === 'string') {
+			return license;
+		} else {
+			return 'No license available';
+		}
 	};
 
 	const chosenRepoDetails = repositories.find(repo => repo.id === chosenRepoId);
@@ -186,11 +186,13 @@ const SearchResult: React.FC<SearchResultProps> = ({ filter }) => {
 							</div>
 							{chosenRepoDetails && (
 								<div className={style.right}>
-									<div className={style.repoDetails}>
-										<h2>{chosenRepoDetails.name}</h2>
-										<p><strong>Description:</strong> {chosenRepoDetails.description}</p>
-										<p><strong>License:</strong> {chosenRepoDetails.license}</p>
-									</div>
+									<h2>{chosenRepoDetails.name}</h2>
+									<p><strong>Language:</strong> {chosenRepoDetails.language}</p>
+									<p><strong>Forks:</strong> {chosenRepoDetails.forks_count}</p>
+									<p><strong>Stars:</strong> {chosenRepoDetails.stargazers_count}</p>
+									<p><strong>Last Updated:</strong> {chosenRepoDetails.updated_at}</p>
+									<p><strong>Description:</strong> {chosenRepoDetails.description}</p>
+									<p><strong>License:</strong> {renderLicense(chosenRepoDetails.license)}</p>
 								</div>
 							)}
 						</div>
