@@ -14,32 +14,37 @@
 
 
 ## Установка
-
 1. Склонируйте репозиторий:
 
-   git clone https://github.com/neekit95/GH-search.git
+    ```bash
+    git clone https://github.com/neekit95/GH-search.git
+    ```
 
 2. Перейдите в директорию проекта:
 
-   cd GH-search
+    ```bash
+    cd GH-search
+    ```
 
 3. Установите зависимости:
 
-   npm install
+    ```bash
+    npm install
+    ```
 
-   или
+    или
 
-   yarn install
+    ```bash
+    yarn install
+    ```
 
 ## Запуск
 
 Для запуска приложения в режиме разработки используйте команду:
 
-npm start
-
-или
-
-yarn start
+   ```bash
+       vite
+   ```
 
 
 ## Используемые технологии
